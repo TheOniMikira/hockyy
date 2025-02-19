@@ -157,3 +157,36 @@ xterm*|rxvt*)
 *)
     ;;
 esac
+
+goFuzz() {
+  if [ -z "$1" ]; then
+    echo "Usage: goFuzz <program> <runCount>"
+    return 1
+  fi
+
+  if [ -z "$2" ]; then
+    echo "Usage: goFuzz <program> <runCount>"
+    return 1
+  fi
+
+  for i in $(seq 1 "$2"); do
+    echo "Running test case #$i..."
+    # Generate a test case
+    ./fuzz > tc.in
+    
+    # Run the brute force/reference solution
+    ./bf < tc.in > bf.out
+
+    # Run your target solution
+    ./"$1" < tc.in > "$1.out"
+    
+    # Compare outputs
+    if ! diff bf.out "$1.out" > /dev/null; then
+      echo "Difference found on test case #$i!"
+      diff bf.out "$1.out"
+      return 1
+    fi
+  done
+
+  echo "All 100 test cases passed without any differences."
+}
